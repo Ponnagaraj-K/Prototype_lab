@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const studySessionSchema = new mongoose.Schema({
+const taskSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -16,17 +16,22 @@ const studySessionSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  points: {
+  status: {
+    type: String,
+    enum: ['pending', 'completed'],
+    default: 'pending'
+  },
+  pointsEarned: {
     type: Number,
     default: 0
   },
   date: {
     type: Date,
-    default: Date.now,
+    required: true,
     index: true
   }
 }, {
   timestamps: true
 });
 
-export default mongoose.model('StudySession', studySessionSchema);
+export default mongoose.model('Task', taskSchema);

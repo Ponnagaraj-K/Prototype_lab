@@ -5,6 +5,7 @@ interface User {
   id: string;
   email: string;
   name: string;
+  setupCompleted: boolean;
 }
 
 interface AuthContextType {
@@ -23,10 +24,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    console.log('Initial token check:', token ? 'Token exists' : 'No token');
+    
     if (token) {
       apiClient.get('/auth/me')
-        .then(userData => setUser(userData))
-        .catch(() => {
+        .then(userData => {
+          console.log('User data loaded:', userData);
+          setUser(userData);
+        })
+        .catch((error) => {
+          console.error('Failed to load user:', error);
           localStorage.removeItem('token');
           setUser(null);
         })
@@ -39,8 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, name: string) => {
     try {
       const data = await apiClient.post('/auth/signup', { email, password, name });
-      localStorage.setItem('token', data.token);
-      setUser(data.user);
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        console.log('Token stored after signup:', data.token);
+      }
+      if (data.user) {
+        setUser(data.user);
+      }
       return { error: null };
     } catch (error: any) {
       return { error: { message: error.message } };
@@ -50,8 +62,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       const data = await apiClient.post('/auth/signin', { email, password });
-      localStorage.setItem('token', data.token);
-      setUser(data.user);
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        console.log('Token stored after signin:', data.token);
+      }
+      if (data.user) {
+        setUser(data.user);
+      }
       return { error: null };
     } catch (error: any) {
       return { error: { message: error.message } };

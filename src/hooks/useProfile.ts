@@ -2,33 +2,23 @@ import { useState, useEffect } from "react";
 import apiClient from "@/lib/apiClient";
 import { useAuth } from "./useAuth";
 
-export interface Profile {
-  _id: string;
-  email: string;
-  name: string | null;
-  daily_goal_minutes: number;
-}
-
 export function useProfile() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-    apiClient.get('/profile')
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
+    setLoading(true);
+    apiClient.get('/stats')
       .then(data => setProfile(data))
-      .catch(error => console.error('Error fetching profile:', error));
+      .catch(error => console.error('Error fetching profile:', error))
+      .finally(() => setLoading(false));
   }, [user]);
 
-  const updateGoal = async (minutes: number) => {
-    if (!user) return;
-    try {
-      const data = await apiClient.patch('/profile', { daily_goal_minutes: minutes });
-      setProfile(data);
-    } catch (error) {
-      console.error('Error updating goal:', error);
-    }
-  };
-
-  return { profile, updateGoal };
+  return { profile, loading };
 }

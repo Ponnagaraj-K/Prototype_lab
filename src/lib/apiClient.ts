@@ -1,44 +1,47 @@
-// Auto-detect: Use localhost if backend is local, otherwise use network IP
-const getApiUrl = () => {
-  // Check if running in development
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+// Simple direct URL - no auto-detection
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+console.log('API URL:', API_URL); // Debug log
+
+const getToken = () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    console.warn('No token found in localStorage');
   }
-  
-  // Try to detect if backend is accessible locally
-  const hostname = window.location.hostname;
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return 'http://localhost:5000/api';
-  }
-  
-  // For network access, use the current host's IP
-  return `http://${hostname}:5000/api`;
+  return token;
 };
-
-const API_URL = getApiUrl();
-
-const getToken = () => localStorage.getItem('token');
 
 const apiClient = {
   async request(endpoint: string, options: RequestInit = {}) {
     const token = getToken();
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
       ...options.headers,
     };
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      ...options,
-      headers,
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Request failed');
+    // Always add Authorization header if token exists
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
-    return response.json();
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Request failed' }));
+        throw new Error(error.error || 'Request failed');
+      }
+
+      return response.json();
+    } catch (error: any) {
+      if (error.message === 'Failed to fetch') {
+        throw new Error('Cannot connect to server. Make sure backend is running on port 5000');
+      }
+      throw error;
+    }
   },
 
   get(endpoint: string) {

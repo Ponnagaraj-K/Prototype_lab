@@ -15,11 +15,27 @@ const userSchema = new mongoose.Schema({
   },
   name: {
     type: String,
-    default: ''
+    required: true
   },
-  daily_goal_minutes: {
+  points: {
     type: Number,
-    default: 300
+    default: 0
+  },
+  currentStreak: {
+    type: Number,
+    default: 0
+  },
+  lastStudyDate: {
+    type: Date,
+    default: null
+  },
+  setupCompleted: {
+    type: Boolean,
+    default: false
+  },
+  dailyStudyHours: {
+    type: Number,
+    default: 2.5
   }
 }, {
   timestamps: true

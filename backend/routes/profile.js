@@ -10,12 +10,7 @@ router.get('/', authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    res.json({
-      _id: user._id,
-      email: user.email,
-      name: user.name,
-      daily_goal_minutes: user.daily_goal_minutes
-    });
+    res.json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -23,21 +18,16 @@ router.get('/', authMiddleware, async (req, res) => {
 
 router.patch('/', authMiddleware, async (req, res) => {
   try {
-    const { daily_goal_minutes, name } = req.body;
+    const { name } = req.body;
     const user = await User.findByIdAndUpdate(
       req.userId,
-      { daily_goal_minutes, name },
+      { name },
       { new: true }
     ).select('-password');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    res.json({
-      _id: user._id,
-      email: user.email,
-      name: user.name,
-      daily_goal_minutes: user.daily_goal_minutes
-    });
+    res.json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

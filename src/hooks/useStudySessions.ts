@@ -4,13 +4,10 @@ import { useAuth } from "./useAuth";
 
 export interface StudySession {
   _id: string;
-  user_id: string;
   subject: string;
-  duration_minutes: number;
   start_time: string;
-  end_time: string | null;
+  duration_minutes: number;
   is_active: boolean;
-  createdAt: string;
 }
 
 export function useStudySessions() {
@@ -20,50 +17,57 @@ export function useStudySessions() {
   const [loading, setLoading] = useState(true);
 
   const fetchSessions = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     try {
+      console.log('Fetching sessions...');
       const data = await apiClient.get('/sessions');
+      console.log('Sessions fetched:', data);
       setSessions(data);
       const active = data.find((s: StudySession) => s.is_active);
       setActiveSession(active || null);
     } catch (error) {
       console.error('Error fetching sessions:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [user]);
 
   useEffect(() => {
     fetchSessions();
-  }, [fetchSessions]);
+  }, [user]);
 
   const startSession = async (subject: string) => {
-    if (!user) return;
     try {
-      const data = await apiClient.post('/sessions', { subject });
-      setActiveSession(data);
-      await fetchSessions();
+      const newSession: StudySession = {
+        _id: Date.now().toString(),
+        subject,
+        start_time: new Date().toISOString(),
+        duration_minutes: 0,
+        is_active: true
+      };
+      setActiveSession(newSession);
     } catch (error) {
       console.error('Error starting session:', error);
     }
   };
 
   const stopSession = async () => {
-    if (!activeSession || !user) return;
-    try {
-      const now = new Date();
-      const start = new Date(activeSession.start_time);
-      const durationMinutes = Math.round((now.getTime() - start.getTime()) / 60000);
-      await apiClient.patch(`/sessions/${activeSession._id}`, {
-        is_active: false,
-        end_time: now.toISOString(),
-        duration_minutes: durationMinutes
-      });
-      setActiveSession(null);
-      await fetchSessions();
-    } catch (error) {
-      console.error('Error stopping session:', error);
-    }
+    if (!activeSession) return;
+    setActiveSession(null);
+    fetchSessions();
   };
 
-  return { sessions, activeSession, loading, startSession, stopSession, fetchSessions };
+  return { 
+    sessions, 
+    loading, 
+    activeSession,
+    startSession,
+    stopSession,
+    fetchSessions 
+  };
 }
+
+export type { StudySession };

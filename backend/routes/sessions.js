@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const sessions = await StudySession.find({ user_id: req.userId })
+    const sessions = await StudySession.find({ userId: req.userId })
       .sort({ createdAt: -1 })
       .limit(500);
     res.json(sessions);
@@ -17,10 +17,40 @@ router.get('/', authMiddleware, async (req, res) => {
 
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { subject } = req.body;
+    const { subject, duration_minutes, points } = req.body;
+    
+    // If duration_minutes provided, create completed session
+    if (duration_minutes) {
+      const now = new Date();
+      const session = new StudySession({
+        userId: req.userId,
+        subject,
+        date: now,
+        start_time: now,
+        end_time: now,
+        duration_minutes,
+        points: points || 0,
+        is_active: false
+      });
+      await session.save();
+      
+      // Update user points
+      const User = (await import('../models/User.js')).default;
+      await User.findByIdAndUpdate(req.userId, {
+        $inc: { points: points || 0 }
+      });
+      
+      return res.status(201).json(session);
+    }
+    
+    // Otherwise create active session
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     const session = new StudySession({
-      user_id: req.userId,
+      userId: req.userId,
       subject,
+      date: today,
       start_time: new Date(),
       is_active: true
     });
@@ -33,10 +63,10 @@ router.post('/', authMiddleware, async (req, res) => {
 
 router.patch('/:id', authMiddleware, async (req, res) => {
   try {
-    const { is_active, end_time, duration_minutes } = req.body;
+    const { isActive, endTime, duration } = req.body;
     const session = await StudySession.findOneAndUpdate(
-      { _id: req.params.id, user_id: req.userId },
-      { is_active, end_time, duration_minutes },
+      { _id: req.params.id, userId: req.userId },
+      { isActive, endTime, duration },
       { new: true }
     );
     if (!session) {

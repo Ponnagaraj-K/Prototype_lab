@@ -20,7 +20,7 @@ router.post('/signup', async (req, res) => {
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     
     res.status(201).json({
-      user: { id: user._id, email: user.email, name: user.name },
+      user: { id: user._id, email: user.email, name: user.name, setupCompleted: user.setupCompleted },
       token
     });
   } catch (error) {
@@ -45,7 +45,7 @@ router.post('/signin', async (req, res) => {
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     
     res.json({
-      user: { id: user._id, email: user.email, name: user.name },
+      user: { id: user._id, email: user.email, name: user.name, setupCompleted: user.setupCompleted },
       token
     });
   } catch (error) {
@@ -63,7 +63,7 @@ router.get('/me', authMiddleware, async (req, res) => {
       id: user._id,
       email: user.email,
       name: user.name,
-      daily_goal_minutes: user.daily_goal_minutes
+      setupCompleted: user.setupCompleted
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

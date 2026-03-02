@@ -8,7 +8,7 @@ interface Props {
 }
 
 const RecentSessions = ({ sessions }: Props) => {
-  const recent = sessions.filter((s) => !s.is_active).slice(0, 8);
+  const recent = sessions.filter((s) => !s.is_active && s.start_time).slice(0, 8);
 
   return (
     <motion.div
@@ -25,28 +25,33 @@ const RecentSessions = ({ sessions }: Props) => {
         </div>
       ) : (
         <div className="space-y-3">
-          {recent.map((session) => (
-            <div
-              key={session._id}
-              className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium">{session.subject}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {format(new Date(session.start_time), "MMM d, h:mm a")}
+          {recent.map((session) => {
+            const startDate = session.start_time ? new Date(session.start_time) : null;
+            const isValidDate = startDate && !isNaN(startDate.getTime());
+            
+            return (
+              <div
+                key={session._id}
+                className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <BookOpen className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">{session.subject}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {isValidDate ? format(startDate, "MMM d, h:mm a") : 'Recent'}
+                    </div>
                   </div>
                 </div>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  {session.duration_minutes || 0}m
+                </div>
               </div>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" />
-                {session.duration_minutes}m
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </motion.div>
