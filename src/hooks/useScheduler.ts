@@ -38,10 +38,16 @@ export const useScheduler = (subjects?: Subject[]) => {
 
     if (shouldGenerate) {
       const taskTypes: Array<'study' | 'practice' | 'revision'> = ['study', 'practice', 'revision'];
+      // Get daily study hours from user (default 2.5 hours = 150 minutes)
+      const dailyMinutes = (user?.dailyStudyHours || 2.5) * 60;
+      const totalPriorityScore = subjects.reduce((sum, s) => sum + s.priorityScore, 0);
       
       const newTasks: StudyTask[] = subjects.flatMap(subject => {
         const taskType = taskTypes[Math.floor(Math.random() * taskTypes.length)];
-        const duration = Math.round((subject.priorityScore / 100) * 60) || 30;
+        // Distribute daily minutes based on priority score
+        const duration = totalPriorityScore > 0 
+          ? Math.round((subject.priorityScore / totalPriorityScore) * dailyMinutes)
+          : Math.round(dailyMinutes / subjects.length);
         
         return {
           id: crypto.randomUUID(),
@@ -49,7 +55,7 @@ export const useScheduler = (subjects?: Subject[]) => {
           subjectName: subject.name,
           type: taskType,
           title: `${taskType.charAt(0).toUpperCase() + taskType.slice(1)} - ${subject.name}`,
-          duration,
+          duration: Math.max(15, duration), // Minimum 15 minutes per task
           remainingTime: duration,
           scheduledDate: new Date(),
           status: 'not_started' as TaskStatus,

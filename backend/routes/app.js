@@ -340,10 +340,11 @@ router.get('/stats', authMiddleware, async (req, res) => {
 router.get('/stats/weekly', authMiddleware, async (req, res) => {
   try {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setHours(23, 59, 59, 999);
 
     const weekAgo = new Date(today);
     weekAgo.setDate(weekAgo.getDate() - 6);
+    weekAgo.setHours(0, 0, 0, 0);
 
     const sessions = await StudySession.aggregate([
       {
@@ -364,8 +365,9 @@ router.get('/stats/weekly', authMiddleware, async (req, res) => {
     // Fill missing days with zeros
     const weeklyData = [];
     for (let i = 0; i < 7; i++) {
-      const date = new Date(weekAgo);
-      date.setDate(weekAgo.getDate() + i);
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() - (6 - i));
       const dateStr = date.toISOString().split('T')[0];
 
       const session = sessions.find(s => s._id === dateStr);
@@ -385,16 +387,15 @@ router.get('/stats/weekly', authMiddleware, async (req, res) => {
 router.get('/sessions/recent', authMiddleware, async (req, res) => {
   try {
     const sessions = await StudySession.find({ userId: req.userId })
-      .populate('subjectId', 'name')
       .sort({ date: -1 })
       .limit(10);
 
     const formattedSessions = sessions.map(s => ({
       _id: s._id,
-      subject: s.subjectId?.name || 'Unknown',
-      start_time: s.date,
-      duration_minutes: s.duration,
-      is_active: false
+      subject: s.subject,
+      start_time: s.start_time || s.date,
+      duration_minutes: s.duration_minutes,
+      is_active: s.is_active || false
     }));
 
     res.json(formattedSessions);

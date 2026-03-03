@@ -7,18 +7,28 @@ const studySessionSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  subjectId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Subject',
+  subject: {
+    type: String,
     required: true
   },
-  duration: {
+  duration_minutes: {
     type: Number,
     required: true
   },
   points: {
     type: Number,
     default: 0
+  },
+  start_time: {
+    type: Date,
+    default: Date.now
+  },
+  end_time: {
+    type: Date
+  },
+  is_active: {
+    type: Boolean,
+    default: false
   },
   date: {
     type: Date,

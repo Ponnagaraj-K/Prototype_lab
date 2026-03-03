@@ -70,4 +70,17 @@ router.get('/me', authMiddleware, async (req, res) => {
   }
 });
 
+router.post('/reset-setup', authMiddleware, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.userId, { setupCompleted: false });
+    const AcademicProfile = (await import('../models/AcademicProfile.js')).default;
+    const Subject = (await import('../models/Subject.js')).default;
+    await AcademicProfile.deleteOne({ userId: req.userId });
+    await Subject.deleteMany({ userId: req.userId });
+    res.json({ message: 'Setup reset successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

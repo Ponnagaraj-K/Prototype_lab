@@ -29,10 +29,14 @@ export const calculatePriorityScores = (
   examDate: Date
 ): Subject[] => {
   const daysLeft = Math.max(1, Math.ceil((examDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-  const totalCredits = subjects.reduce((sum, s) => sum + s.credits, 0);
 
   return subjects.map(subject => {
-    const creditWeight = (subject.credits / totalCredits) * 40;
+    // Credit weight: 1-2 credits = low, 3 credits = medium, 4 credits = high
+    let creditWeight;
+    if (subject.credits >= 4) creditWeight = 40; // High
+    else if (subject.credits === 3) creditWeight = 25; // Medium
+    else creditWeight = 15; // Low (1-2 credits)
+    
     const gradeWeight = (subject.requiredGrade / 10) * 40;
     const urgencyWeight = (1 / daysLeft) * 20;
 

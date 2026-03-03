@@ -49,7 +49,7 @@ function CGPAPlanningContent() {
 
   const { plannedSubjects, isAchievable } = useCGPAPlanner(
     subjects,
-    profile?.currentCGPA || 0,
+    0, // No current CGPA for SGPA
     profile?.targetCGPA || 0,
     profile?.semesterExamDate ? new Date(profile.semesterExamDate) : new Date()
   );
@@ -91,27 +91,27 @@ function CGPAPlanningContent() {
     return 'Low';
   };
 
+  const getGradeLabel = (grade: number) => {
+    if (grade >= 10) return 'O';
+    if (grade >= 9) return 'A+';
+    if (grade >= 8) return 'A';
+    if (grade >= 7) return 'B+';
+    if (grade >= 6) return 'B';
+    if (grade >= 5) return 'C';
+    return 'C';
+  };
+
   return (
     <div className="container py-6 space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold">CGPA Planning</h1>
+        <h1 className="text-2xl font-display font-bold">SGPA Planning</h1>
         <p className="text-muted-foreground">Strategic planning for your academic goals</p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current CGPA</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{profile.currentCGPA}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Target CGPA</CardTitle>
+            <CardTitle className="text-sm font-medium">Target SGPA</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -142,8 +142,8 @@ function CGPAPlanningContent() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {plannedSubjects.map((subject) => (
-              <div key={subject.id} className="border rounded-lg p-4">
+            {plannedSubjects.map((subject, index) => (
+              <div key={subject.id || index} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
                     <h3 className="font-semibold">{subject.name}</h3>
@@ -160,7 +160,7 @@ function CGPAPlanningContent() {
                   <div>
                     <div className="text-sm text-muted-foreground">Required Grade</div>
                     <div className="text-lg font-semibold">
-                      {subject.requiredGrade.toFixed(2)}/10
+                      {getGradeLabel(subject.requiredGrade)} ({subject.requiredGrade.toFixed(2)})
                     </div>
                   </div>
                   <div>

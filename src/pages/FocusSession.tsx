@@ -2,14 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, Pause, Play } from 'lucide-react';
 import { CelebrationPopup } from '@/components/CelebrationPopup';
 import apiClient from '@/lib/apiClient';
+import { usePointsSystem } from '@/contexts/PointsContext';
+import { useAuth } from '@/hooks/useAuth';
 
 export const FocusSession = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const task = location.state?.task;
+  const { addPoints } = usePointsSystem();
+  const { user } = useAuth();
 
   const [timeLeft, setTimeLeft] = useState(task?.duration * 60 || 0);
   const [totalTime, setTotalTime] = useState(0);
@@ -17,6 +21,7 @@ export const FocusSession = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [points, setPoints] = useState(0);
   const [bonusPoints, setBonusPoints] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -30,6 +35,8 @@ export const FocusSession = () => {
   }, [totalTime, isExtraMode]);
 
   useEffect(() => {
+    if (isPaused) return;
+    
     const interval = setInterval(() => {
       setTotalTime(prev => prev + 1);
 
@@ -41,7 +48,7 @@ export const FocusSession = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timeLeft, isExtraMode]);
+  }, [timeLeft, isExtraMode, isPaused]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -51,14 +58,36 @@ export const FocusSession = () => {
 
   const handleComplete = async () => {
     const minutesStudied = Math.max(1, Math.floor(totalTime / 60));
+    const taskDuration = task.duration;
+    const completionRatio = Math.min(1, minutesStudied / taskDuration);
+    const maxPoints = 10;
+    const pointsEarned = Math.round(maxPoints * completionRatio);
 
+    console.log('Completing task:', { minutesStudied, taskDuration, completionRatio, pointsEarned, subject: task.subjectName });
+
+    setPoints(pointsEarned);
+    setBonusPoints(0);
+    
     try {
-      const response = await apiClient.patch(`/tasks/${task.id}/complete`, {
-        duration: minutesStudied
+      const response = await apiClient.post('/sessions', {
+        subject: task.subjectName,
+        duration_minutes: minutesStudied,
+        points: pointsEarned
       });
+      console.log('Session created:', response);
       
-      setPoints(response.points);
-      setBonusPoints(0);
+      addPoints(pointsEarned);
+      
+      const STORAGE_KEY = `scheduler_state_${user?.id || 'guest'}`;
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const state = JSON.parse(saved);
+        state.tasks = state.tasks.map((t: any) => 
+          t.id === task.id ? { ...t, completed: true, status: 'completed', pointsEarned } : t
+        );
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+      
       setShowCelebration(true);
     } catch (error) {
       console.error('Failed to complete task:', error);
@@ -66,8 +95,10 @@ export const FocusSession = () => {
     }
   };
 
-  const handleCelebrationClose = () => {
+  const handleCelebrationClose = async () => {
     setShowCelebration(false);
+    await new Promise(resolve => setTimeout(resolve, 100));
+    window.dispatchEvent(new Event('storage'));
     navigate('/dashboard');
   };
 
@@ -80,14 +111,24 @@ export const FocusSession = () => {
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 flex flex-col items-center justify-center text-white">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-4 right-4 text-white hover:bg-white/20"
-        onClick={handleComplete}
-      >
-        <X className="h-6 w-6" />
-      </Button>
+      <div className="absolute top-4 right-4 flex gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:bg-white/20"
+          onClick={() => setIsPaused(!isPaused)}
+        >
+          {isPaused ? <Play className="h-6 w-6" /> : <Pause className="h-6 w-6" />}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:bg-white/20"
+          onClick={handleComplete}
+        >
+          <X className="h-6 w-6" />
+        </Button>
+      </div>
 
       <div className="text-center space-y-8 max-w-2xl px-4">
         <div className="space-y-2">
@@ -96,6 +137,11 @@ export const FocusSession = () => {
         </div>
 
         <div className="space-y-4">
+          {isPaused && (
+            <div className="text-4xl font-bold text-yellow-400 mb-4">
+              PAUSED
+            </div>
+          )}
           {!isExtraMode ? (
             <>
               <div className="text-8xl font-mono font-bold">

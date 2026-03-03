@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { SetupWizard } from "@/components/SetupWizard";
 import AppHeader from "@/components/AppHeader";
 import DashboardStats from "@/components/DashboardStats";
-import { TaskList } from "@/components/TaskList";
 import WeeklyChart from "@/components/WeeklyChart";
 import { Leaderboard } from "@/components/Leaderboard";
 import StudyTimer from "@/components/StudyTimer";
@@ -17,51 +16,54 @@ import apiClient from "@/lib/apiClient";
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
-  const { sessions = [], loading: sessionsLoading, startSession, stopSession, activeSession } = useStudySessions();
+  const { startSession, stopSession, activeSession, fetchSessions } = useStudySessions();
   const { profile } = useProfile();
-  const [tasks, setTasks] = useState([]);
   const [recentSessions, setRecentSessions] = useState([]);
-  const [tasksLoading, setTasksLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+
+  // Check if exam date has passed - reset setup for new semester
+  useEffect(() => {
+    const checkExamDate = async () => {
+      if (user?.setupCompleted) {
+        try {
+          const profile = await apiClient.get('/academic/profile');
+          if (profile?.semesterExamDate) {
+            const examDate = new Date(profile.semesterExamDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (examDate < today) {
+              await apiClient.post('/auth/reset-setup');
+              window.location.reload();
+            }
+          }
+        } catch (error) {
+          console.error('Error checking exam date:', error);
+        }
+      }
+    };
+    checkExamDate();
+  }, [user]);
 
   useEffect(() => {
     if (user && user.setupCompleted) {
-      fetchTasks();
       fetchRecentSessions();
+      fetchSessions();
     } else if (user) {
-      setTasksLoading(false);
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, location]);
 
-  const fetchTasks = async () => {
-    try {
-      const data = await apiClient.get('/tasks/today');
-      const formattedTasks = data.map((t: any) => {
-        const priorityScore = t.subjectId?.priorityScore || 50;
-        const priority = priorityScore >= 70 ? 'high' : priorityScore >= 40 ? 'medium' : 'low';
-        
-        return {
-          id: t._id,
-          subjectId: t.subjectId?._id,
-          subjectName: t.subjectId?.name || 'Subject',
-          title: `Study - ${t.subjectId?.name || 'Subject'}`,
-          duration: t.duration,
-          status: t.status === 'completed' ? 'completed' : 'not_started',
-          completed: t.status === 'completed',
-          pointsEarned: t.pointsEarned || 0,
-          priority,
-          type: 'study'
-        };
-      });
-      setTasks(formattedTasks);
-    } catch (error: any) {
-      if (error.message?.includes('Setup expired')) {
-        window.location.reload();
-      }
-      console.error('Error fetching tasks:', error);
-    } finally {
-      setTasksLoading(false);
-    }
-  };
+  // Listen for storage events to refresh
+  useEffect(() => {
+    const handleStorage = () => {
+      fetchSessions();
+      fetchRecentSessions();
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   const fetchRecentSessions = async () => {
     try {
@@ -69,10 +71,12 @@ const Dashboard = () => {
       setRecentSessions(data);
     } catch (error) {
       console.error('Error fetching recent sessions:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (authLoading || tasksLoading) {
+  if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -97,25 +101,24 @@ const Dashboard = () => {
           <p className="text-muted-foreground text-sm mt-1">Here's your study overview</p>
         </div>
         
-        {sessionsLoading ? (
+        {loading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : (
           <>
-            <DashboardStats sessions={sessions} profile={profile} />
+            <DashboardStats profile={profile} />
             
             <div className="grid lg:grid-cols-2 gap-6">
               <StudyTimer activeSession={activeSession} onStart={startSession} onStop={stopSession} />
-              <TaskList tasks={tasks} />
-            </div>
-            
-            <div className="grid lg:grid-cols-2 gap-6">
-              <WeeklyChart sessions={sessions} />
               <Leaderboard />
             </div>
             
-            <ProductivityInsight sessions={recentSessions} />
+            <div className="grid lg:grid-cols-2 gap-6">
+              <WeeklyChart />
+              <ProductivityInsight sessions={recentSessions} />
+            </div>
+            
             <RecentSessions sessions={recentSessions} />
           </>
         )}

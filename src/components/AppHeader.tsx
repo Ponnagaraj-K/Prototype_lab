@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
-import { BookOpen, LogOut, Target, BarChart3 } from "lucide-react";
+import { BookOpen, LogOut, Target, BarChart3, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 
@@ -30,14 +30,24 @@ const AppHeader = () => {
                   Dashboard
                 </Button>
               </Link>
-              <Link to="/cgpa-planning">
+              <Link to="/tasks">
                 <Button 
-                  variant={location.pathname === '/cgpa-planning' ? 'default' : 'ghost'} 
+                  variant={location.pathname === '/tasks' ? 'default' : 'ghost'} 
+                  size="sm"
+                  className="gap-2"
+                >
+                  <CheckSquare className="h-4 w-4" />
+                  Tasks
+                </Button>
+              </Link>
+              <Link to="/sgpa-planning">
+                <Button 
+                  variant={location.pathname === '/sgpa-planning' ? 'default' : 'ghost'} 
                   size="sm"
                   className="gap-2"
                 >
                   <Target className="h-4 w-4" />
-                  CGPA Planning
+                  SGPA Planning
                 </Button>
               </Link>
             </nav>

@@ -1,54 +1,48 @@
 import { Clock, Flame, Target, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
-import type { StudySession } from "@/hooks/useStudySessions";
+import { useState, useEffect } from "react";
+import apiClient from "@/lib/apiClient";
 import type { Profile } from "@/hooks/useProfile";
 
 interface Props {
-  sessions: StudySession[];
   profile: Profile | null;
 }
 
-const DashboardStats = ({ sessions, profile }: Props) => {
-  const today = new Date().toDateString();
-  const todayMinutes = sessions
-    .filter((s) => new Date(s.start_time).toDateString() === today && !s.is_active)
-    .reduce((sum, s) => sum + s.duration_minutes, 0);
+const DashboardStats = ({ profile }: Props) => {
+  const [stats, setStats] = useState({
+    todayMinutes: 0,
+    weekMinutes: 0,
+    streak: 0
+  });
 
-  const todayHours = (todayMinutes / 60).toFixed(1);
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
-  // Weekly total
-  const weekAgo = new Date();
-  weekAgo.setDate(weekAgo.getDate() - 7);
-  const weeklyMinutes = sessions
-    .filter((s) => new Date(s.start_time) >= weekAgo && !s.is_active)
-    .reduce((sum, s) => sum + s.duration_minutes, 0);
-  const weeklyHours = (weeklyMinutes / 60).toFixed(1);
+  const fetchStats = async () => {
+    try {
+      const data = await apiClient.get('/stats');
+      setStats(data);
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
-  // Streak calculation
-  let streak = 0;
-  const dateSet = new Set(
-    sessions.filter((s) => !s.is_active).map((s) => new Date(s.start_time).toDateString())
-  );
-  const d = new Date();
-  while (dateSet.has(d.toDateString())) {
-    streak++;
-    d.setDate(d.getDate() - 1);
-  }
-
-  // Goal progress
+  const todayHours = (stats.todayMinutes / 60).toFixed(1);
+  const weeklyHours = (stats.weekMinutes / 60).toFixed(1);
   const goalMinutes = profile?.daily_goal_minutes ?? 300;
-  const goalPercent = Math.min((todayMinutes / goalMinutes) * 100, 100);
+  const goalPercent = Math.min((stats.todayMinutes / goalMinutes) * 100, 100);
 
-  const stats = [
+  const statsData = [
     { label: "Today", value: `${todayHours}h`, icon: Clock, color: "text-primary" },
     { label: "This Week", value: `${weeklyHours}h`, icon: TrendingUp, color: "text-accent" },
-    { label: "Streak", value: `${streak}d`, icon: Flame, color: "text-destructive" },
+    { label: "Streak", value: `${stats.streak}d`, icon: Flame, color: "text-destructive" },
     { label: "Goal", value: `${Math.round(goalPercent)}%`, icon: Target, color: "text-success" },
   ];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((stat, i) => (
+      {statsData.map((stat, i) => (
         <motion.div
           key={stat.label}
           initial={{ opacity: 0, y: 20 }}

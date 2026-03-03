@@ -2,13 +2,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PointsProvider } from "@/contexts/PointsContext";
 import { ErrorBoundary } from "react-error-boundary";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import Tasks from "./pages/Tasks";
 import CGPAPlanningPage from "./pages/CGPAPlanning";
 import FocusSession from "./pages/FocusSession";
 import NotFound from "./pages/NotFound";
@@ -39,7 +40,9 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/cgpa-planning" element={<CGPAPlanningPage />} />
+                <Route path="/tasks" element={<Tasks />} />
+                <Route path="/sgpa-planning" element={<CGPAPlanningPage />} />
+                <Route path="/cgpa-planning" element={<Navigate to="/sgpa-planning" replace />} />
                 <Route path="/focus-session" element={<FocusSession />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

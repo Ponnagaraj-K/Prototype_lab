@@ -64,7 +64,7 @@ export const SetupWizard = ({ onComplete }: { onComplete: () => void }) => {
       // Calculate required grades and priority scores
       const requiredGrades = calculateRequiredGrades(
         subjectsWithGrades,
-        parseFloat(currentCGPA),
+        0, // No current CGPA needed for SGPA
         parseFloat(targetCGPA)
       );
       
@@ -83,7 +83,7 @@ export const SetupWizard = ({ onComplete }: { onComplete: () => void }) => {
       // Save to academic profile
       await apiClient.post('/academic/profile', {
         subjects: subjectsWithPriority.map(s => ({ ...s, _id: s._id || s.id })),
-        currentCGPA: parseFloat(currentCGPA),
+        currentCGPA: 0,
         targetCGPA: parseFloat(targetCGPA),
         semesterExamDate: examDate,
         setupCompleted: true
@@ -180,29 +180,19 @@ export const SetupWizard = ({ onComplete }: { onComplete: () => void }) => {
             <>
               <div className="space-y-4">
                 <div>
-                  <Label>Current CGPA</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={currentCGPA}
-                    onChange={(e) => setCurrentCGPA(e.target.value)}
-                    min="0"
-                    max="10"
-                    placeholder="e.g., 7.5"
-                  />
-                </div>
-
-                <div>
-                  <Label>Target CGPA</Label>
+                  <Label>Target SGPA</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={targetCGPA}
                     onChange={(e) => setTargetCGPA(e.target.value)}
-                    min="0"
+                    min="5"
                     max="10"
                     placeholder="e.g., 8.5"
                   />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    What SGPA do you want to achieve this semester?
+                  </p>
                 </div>
               </div>
 
@@ -212,7 +202,7 @@ export const SetupWizard = ({ onComplete }: { onComplete: () => void }) => {
                 </Button>
                 <Button
                   onClick={() => setStep(3)}
-                  disabled={!currentCGPA || !targetCGPA}
+                  disabled={!targetCGPA || parseFloat(targetCGPA) < 5}
                   className="flex-1"
                 >
                   Next

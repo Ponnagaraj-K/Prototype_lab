@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import AppHeader from "@/components/AppHeader";
 import { CGPAPlanning } from "@/components/CGPAPlanning";
 
-const CGPAPlanningPage = () => {
+const SGPAPlanningPage = () => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -20,4 +20,4 @@ const CGPAPlanningPage = () => {
   );
 };
 
-export default CGPAPlanningPage;
+export default SGPAPlanningPage;

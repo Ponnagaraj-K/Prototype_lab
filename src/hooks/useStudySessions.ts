@@ -22,9 +22,7 @@ export function useStudySessions() {
       return;
     }
     try {
-      console.log('Fetching sessions...');
-      const data = await apiClient.get('/sessions');
-      console.log('Sessions fetched:', data);
+      const data = await apiClient.get('/sessions/recent');
       setSessions(data);
       const active = data.find((s: StudySession) => s.is_active);
       setActiveSession(active || null);
@@ -36,8 +34,12 @@ export function useStudySessions() {
   }, [user]);
 
   useEffect(() => {
-    fetchSessions();
-  }, [user]);
+    if (user) {
+      fetchSessions();
+    } else {
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   const startSession = async (subject: string) => {
     try {
