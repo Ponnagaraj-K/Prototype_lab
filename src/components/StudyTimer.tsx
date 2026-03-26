@@ -44,58 +44,89 @@ const StudyTimer = ({ activeSession, onStart, onStop }: Props) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="glass-card rounded-xl p-6"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.3, type: "spring" }}
+      className="relative group"
     >
-      <h3 className="font-display text-lg font-semibold mb-4">Study Timer</h3>
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-3xl blur-2xl group-hover:blur-3xl transition-all"></div>
+      <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl p-8 border border-white/20 shadow-2xl">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+            <Play className="h-6 w-6 text-white" />
+          </div>
+          <h3 className="font-display text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">Study Timer</h3>
+        </div>
 
-      {!activeSession ? (
-        <div className="space-y-4">
-          <Input
-            placeholder="Subject (e.g. Mathematics)"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-          />
-          <Button
-            onClick={() => onStart(subject)}
-            className="w-full gradient-warm-bg text-primary-foreground h-12 text-base"
-          >
-            <Play className="mr-2 h-5 w-5" /> Start Studying
-          </Button>
-        </div>
-      ) : (
-        <div className="text-center space-y-4">
-          <div className="text-sm text-muted-foreground font-medium uppercase tracking-wider">
-            {activeSession.subject}
-          </div>
-          <div className={`text-5xl font-display font-bold tabular-nums ${activeSession ? "text-primary" : ""} ${isPaused ? "opacity-50" : ""}`}>
-            {formatTime(elapsed)}
-          </div>
-          {activeSession && (
-            <div className="h-1 rounded-full bg-muted overflow-hidden">
-              <div className="h-full rounded-full gradient-warm-bg animate-pulse-glow" style={{ width: "100%" }} />
+        {!activeSession ? (
+          <div className="space-y-4">
+            <div className="relative">
+              <Input
+                placeholder="Subject (e.g. Mathematics)"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="h-14 text-lg rounded-2xl border-2 focus:border-purple-500 transition-all"
+              />
             </div>
-          )}
-          <div className="flex gap-3 justify-center">
             <Button
-              variant="secondary"
-              size="lg"
-              onClick={() => setIsPaused(!isPaused)}
+              onClick={() => onStart(subject)}
+              className="w-full h-16 text-lg rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-[1.02]"
             >
-              {isPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
-            </Button>
-            <Button
-              variant="destructive"
-              size="lg"
-              onClick={onStop}
-            >
-              <Square className="h-5 w-5 mr-2" /> Stop
+              <Play className="mr-2 h-6 w-6" /> Start Studying
             </Button>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="text-center space-y-6">
+            <motion.div 
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              className="inline-block px-6 py-2 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 border-2 border-purple-200"
+            >
+              <div className="text-sm font-bold text-purple-700 uppercase tracking-wider">
+                {activeSession.subject}
+              </div>
+            </motion.div>
+            
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 opacity-20 blur-3xl rounded-full"></div>
+              <motion.div 
+                animate={{ scale: isPaused ? 0.95 : 1 }}
+                className={`relative text-7xl font-display font-bold tabular-nums bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent ${isPaused ? "opacity-50" : ""}`}
+              >
+                {formatTime(elapsed)}
+              </motion.div>
+            </div>
+            
+            {activeSession && (
+              <div className="relative h-3 rounded-full bg-gray-200 overflow-hidden">
+                <motion.div 
+                  className="absolute inset-0 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 bg-[length:200%_100%]"
+                  animate={{ backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                />
+              </div>
+            )}
+            
+            <div className="flex gap-4 justify-center pt-4">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => setIsPaused(!isPaused)}
+                className="h-14 px-8 rounded-2xl border-2 hover:border-purple-500 hover:bg-purple-50 transition-all"
+              >
+                {isPaused ? <Play className="h-6 w-6" /> : <Pause className="h-6 w-6" />}
+              </Button>
+              <Button
+                size="lg"
+                onClick={onStop}
+                className="h-14 px-8 rounded-2xl bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white shadow-lg"
+              >
+                <Square className="h-5 w-5 mr-2" /> Stop
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
     </motion.div>
   );
 };

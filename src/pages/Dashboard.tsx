@@ -13,6 +13,7 @@ import RecentSessions from "@/components/RecentSessions";
 import { useStudySessions } from "@/hooks/useStudySessions";
 import { useProfile } from "@/hooks/useProfile";
 import apiClient from "@/lib/apiClient";
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const { user, loading: authLoading } = useAuth();
@@ -20,26 +21,6 @@ const Dashboard = () => {
   const { profile } = useProfile();
   const [recentSessions, setRecentSessions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const location = useLocation();
-
-  useEffect(() => {
-    if (user && user.setupCompleted) {
-      fetchRecentSessions();
-      fetchSessions();
-    } else if (user) {
-      setLoading(false);
-    }
-  }, [user, location]);
-
-  // Listen for storage events to refresh
-  useEffect(() => {
-    const handleStorage = () => {
-      fetchSessions();
-      fetchRecentSessions();
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
 
   const fetchRecentSessions = async () => {
     try {
@@ -52,7 +33,26 @@ const Dashboard = () => {
     }
   };
 
-  if (authLoading || loading) {
+  useEffect(() => {
+    if (user && user.setupCompleted) {
+      fetchRecentSessions();
+      fetchSessions();
+    } else if (user) {
+      setLoading(false);
+    }
+  }, [user, user?.setupCompleted]);
+
+  // Listen for storage events to refresh
+  useEffect(() => {
+    const handleStorage = () => {
+      fetchSessions();
+      fetchRecentSessions();
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
+  if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -62,20 +62,35 @@ const Dashboard = () => {
 
   if (!user) return <Navigate to="/auth" replace />;
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (!user.setupCompleted) {
     return <SetupWizard onComplete={() => window.location.reload()} />;
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-purple-50/30 to-pink-50/30">
       <AppHeader />
-      <main className="container py-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-display font-bold">
-            Welcome back, {user.name} 👋
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">Here's your study overview</p>
-        </div>
+      <main className="container py-8 space-y-8 relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative"
+        >
+          <div className="absolute -inset-8 bg-gradient-to-r from-purple-600/30 to-pink-600/30 blur-3xl rounded-full animate-pulse-glow"></div>
+          <div className="relative text-center md:text-left">
+            <h1 className="text-5xl md:text-6xl font-display font-bold mb-3">
+              Welcome back, <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent animate-gradient">{ user.name}</span> 👋
+            </h1>
+            <p className="text-gray-700 text-xl font-medium">Here's your study overview for today ✨</p>
+          </div>
+        </motion.div>
         
         {loading ? (
           <div className="flex justify-center py-20">

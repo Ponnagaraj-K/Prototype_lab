@@ -63,9 +63,12 @@ export const TaskList = ({ tasks }: TaskListProps) => {
 
   return (
     <>
-      <Card>
+      <Card className="glass-card">
         <CardHeader>
-          <CardTitle>Today's Tasks ({incompleteTasks.length} remaining)</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <span className="text-2xl">📋</span>
+            Today's Tasks ({incompleteTasks.length} remaining)
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {incompleteTasks.length === 0 && completedTasks.length === 0 && (
@@ -75,8 +78,9 @@ export const TaskList = ({ tasks }: TaskListProps) => {
           )}
 
           {incompleteTasks.map(task => (
-            <div key={task.id} className="relative">
-              <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent transition-colors">
+            <div key={task.id} className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity blur"></div>
+              <div className="relative flex items-center justify-between p-4 border rounded-xl hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:scale-[1.01] bg-card">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-medium">{task.title}</h4>
@@ -88,7 +92,7 @@ export const TaskList = ({ tasks }: TaskListProps) => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={() => handleStartTask(task)} size="sm"><Play className="h-4 w-4 mr-1" />Start</Button>
+                  <Button onClick={() => handleStartTask(task)} size="sm" className="btn-gradient text-white"><Play className="h-4 w-4 mr-1" />Start</Button>
                 </div>
               </div>
             </div>
@@ -102,11 +106,11 @@ export const TaskList = ({ tasks }: TaskListProps) => {
               {completedTasks.map(task => (
                 <div
                   key={task.id}
-                  className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 mb-2"
+                  className="flex items-center gap-2 p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 mb-2 hover:shadow-md transition-all"
                 >
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <span className="flex-1 text-sm">{task.title}</span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="flex-1 text-sm font-medium">{task.title}</span>
+                  <span className="text-sm font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full">
                     +{task.pointsEarned || 0} pts
                   </span>
                 </div>

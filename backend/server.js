@@ -10,6 +10,7 @@ import academicRoutes from './routes/academic.js';
 import sessionRoutes from './routes/sessions.js';
 import bookRoutes from './routes/books.js';
 import aiRoutes from './routes/ai.js';
+import knowledgeCheckRoutes from './routes/knowledgeCheck.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +32,7 @@ app.use('/api/academic', academicRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/knowledge-check', knowledgeCheckRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'StudyMate Pro API - Refactored' });

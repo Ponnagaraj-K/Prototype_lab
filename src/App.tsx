@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Tasks from "./pages/Tasks";
 import AIAssistant from "./pages/AIAssistant";
 import Books from "./pages/Books";
+import KnowledgeCheck from "./pages/KnowledgeCheck";
 import CGPAPlanningPage from "./pages/CGPAPlanning";
 import FocusSession from "./pages/FocusSession";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/ai-assistant" element={<AIAssistant />} />
                 <Route path="/books" element={<Books />} />
+                <Route path="/knowledge-check" element={<KnowledgeCheck />} />
                 <Route path="/sgpa-planning" element={<CGPAPlanningPage />} />
                 <Route path="/cgpa-planning" element={<Navigate to="/sgpa-planning" replace />} />
                 <Route path="/focus-session" element={<FocusSession />} />
