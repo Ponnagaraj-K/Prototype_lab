@@ -1,6 +1,8 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Subject from '../models/Subject.js';
+import Task from '../models/Task.js';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -59,6 +61,24 @@ router.get('/me', authMiddleware, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
+    
+    // Check if exam date has passed
+    if (user.setupCompleted) {
+      const subjects = await Subject.find({ userId: req.userId });
+      if (subjects.length > 0) {
+        const examDate = new Date(subjects[0].examDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (examDate < today) {
+          user.setupCompleted = false;
+          await user.save();
+          await Subject.deleteMany({ userId: req.userId });
+          await Task.deleteMany({ userId: req.userId });
+        }
+      }
+    }
+    
     res.json({
       id: user._id,
       email: user.email,
@@ -73,10 +93,8 @@ router.get('/me', authMiddleware, async (req, res) => {
 router.post('/reset-setup', authMiddleware, async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.userId, { setupCompleted: false });
-    const AcademicProfile = (await import('../models/AcademicProfile.js')).default;
-    const Subject = (await import('../models/Subject.js')).default;
-    await AcademicProfile.deleteOne({ userId: req.userId });
     await Subject.deleteMany({ userId: req.userId });
+    await Task.deleteMany({ userId: req.userId });
     res.json({ message: 'Setup reset successfully' });
   } catch (error) {
     res.status(500).json({ error: error.message });

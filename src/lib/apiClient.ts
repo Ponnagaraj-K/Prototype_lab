@@ -15,9 +15,13 @@ const apiClient = {
   async request(endpoint: string, options: RequestInit = {}) {
     const token = getToken();
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
       ...options.headers,
     };
+
+    // Only add Content-Type if not FormData
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     // Always add Authorization header if token exists
     if (token) {
@@ -51,7 +55,7 @@ const apiClient = {
   post(endpoint: string, data: any) {
     return this.request(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: data instanceof FormData ? data : JSON.stringify(data),
     });
   },
 
@@ -59,6 +63,12 @@ const apiClient = {
     return this.request(endpoint, {
       method: 'PATCH',
       body: JSON.stringify(data),
+    });
+  },
+
+  delete(endpoint: string) {
+    return this.request(endpoint, {
+      method: 'DELETE',
     });
   },
 };

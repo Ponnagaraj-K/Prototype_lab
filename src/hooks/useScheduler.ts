@@ -51,7 +51,7 @@ export const useScheduler = (subjects?: Subject[]) => {
         
         return {
           id: crypto.randomUUID(),
-          subjectId: subject.id,
+          subjectId: subject._id || subject.id,
           subjectName: subject.name,
           type: taskType,
           title: `${taskType.charAt(0).toUpperCase() + taskType.slice(1)} - ${subject.name}`,
@@ -72,7 +72,7 @@ export const useScheduler = (subjects?: Subject[]) => {
     }
 
     setLoading(false);
-  }, [subjects]);
+  }, [subjects, user?.dailyStudyHours]);
 
   const updateTaskStatus = async (
     taskId: string, 

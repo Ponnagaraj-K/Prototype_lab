@@ -22,30 +22,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const location = useLocation();
 
-  // Check if exam date has passed - reset setup for new semester
-  useEffect(() => {
-    const checkExamDate = async () => {
-      if (user?.setupCompleted) {
-        try {
-          const profile = await apiClient.get('/academic/profile');
-          if (profile?.semesterExamDate) {
-            const examDate = new Date(profile.semesterExamDate);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            
-            if (examDate < today) {
-              await apiClient.post('/auth/reset-setup');
-              window.location.reload();
-            }
-          }
-        } catch (error) {
-          console.error('Error checking exam date:', error);
-        }
-      }
-    };
-    checkExamDate();
-  }, [user]);
-
   useEffect(() => {
     if (user && user.setupCompleted) {
       fetchRecentSessions();
