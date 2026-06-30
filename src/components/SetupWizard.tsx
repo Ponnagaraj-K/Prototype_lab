@@ -47,60 +47,106 @@ export const SetupWizard = ({ onComplete }: { onComplete: () => void }) => {
     
     setLoading(true);
     try {
-      const subjectsWithGrades = [];
-      
       // Create subjects via API
+      const createdSubjects = [];
       for (const subject of subjects) {
-        const created = await apiClient.post('/subjects', {
-          name: subject.name,
-          credits: subject.credits,
-          targetGrade: 'A',
-          examDate: examDate,
-          priorityScore: 50
-        });
-        subjectsWithGrades.push(created);
+        try {
+          const response = await apiClient.post('/subjects', {
+            name: subject.name,
+            credits: subject.credits,
+            targetGrade: 'A',
+            examDate: examDate.toISOString(),
+            priorityScore: 50
+          });
+          // Map API response to expected format
+          const mappedSubject = {
+            id: response._id,
+            _id: response._id,
+            name: response.name,
+            credits: response.credits,
+            targetGrade: response.targetGrade,
+            examDate: response.examDate,
+            priorityScore: response.priorityScore || 50,
+            requiredGrade: 0
+          };
+          createdSubjects.push(mappedSubject);
+        } catch (err) {
+          console.error('Error creating subject:', err);
+          throw new Error(`Failed to create subject: ${subject.name}`);
+        }
       }
+
+      console.log('Created subjects:', createdSubjects);
 
       // Calculate required grades and priority scores
       const requiredGrades = calculateRequiredGrades(
-        subjectsWithGrades,
+        createdSubjects,
         0, // No current CGPA needed for SGPA
         parseFloat(targetCGPA)
       );
       
+      console.log('Required grades:', requiredGrades);
+
       const subjectsWithPriority = calculatePriorityScores(
         requiredGrades,
         examDate
       );
 
+      console.log('Subjects with priority:', subjectsWithPriority);
+
       // Update subjects with priority scores
       for (const subject of subjectsWithPriority) {
-        await apiClient.patch(`/subjects/${subject._id}`, {
-          priorityScore: subject.priorityScore
-        });
+        try {
+          await apiClient.patch(`/subjects/${subject._id || subject.id}`, {
+            priorityScore: subject.priorityScore
+          });
+        } catch (err) {
+          console.error('Error updating subject priority:', err);
+        }
       }
 
       // Save to academic profile
-      await apiClient.post('/academic/profile', {
-        subjects: subjectsWithPriority.map(s => ({ ...s, _id: s._id || s.id })),
-        currentCGPA: 0,
-        targetCGPA: parseFloat(targetCGPA),
-        semesterExamDate: examDate,
-        setupCompleted: true
-      });
+      try {
+        await apiClient.post('/academic/profile', {
+          subjects: subjectsWithPriority.map(s => ({
+            name: s.name,
+            credits: s.credits,
+            requiredGrade: s.requiredGrade || 0,
+            priorityScore: s.priorityScore || 50
+          })),
+          currentCGPA: 0,
+          targetCGPA: parseFloat(targetCGPA),
+          semesterExamDate: examDate.toISOString(),
+          setupCompleted: true
+        });
+      } catch (err) {
+        console.error('Error creating academic profile:', err);
+        throw new Error('Failed to create academic profile');
+      }
 
       // Generate tasks
-      await apiClient.post('/tasks/generate', {});
+      try {
+        await apiClient.post('/academic/tasks/generate', {});
+      } catch (err) {
+        console.error('Error generating tasks:', err);
+        // Don't fail setup if task generation fails
+      }
 
       // Mark setup as completed and save study hours
-      await apiClient.post('/setup/complete', {
-        dailyStudyHours: parseFloat(dailyStudyHours)
-      });
+      try {
+        await apiClient.post('/setup/complete', {
+          dailyStudyHours: parseFloat(dailyStudyHours)
+        });
+      } catch (err) {
+        console.error('Error completing setup:', err);
+        throw new Error('Failed to complete setup');
+      }
 
       onComplete();
     } catch (error) {
       console.error('Setup failed:', error);
-      alert('Setup failed. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Setup failed. Please try again.';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }

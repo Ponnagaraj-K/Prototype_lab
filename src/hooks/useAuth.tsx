@@ -46,13 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, name: string) => {
     try {
       const data = await apiClient.post('/auth/signup', { email, password, name });
+      console.log('SignUp response:', data);
+      
       if (data.token) {
         localStorage.setItem('token', data.token);
         console.log('Token stored after signup:', data.token);
       }
+      
       if (data.user) {
+        console.log('Setting user data:', data.user);
         setUser(data.user);
       }
+      
       return { error: null };
     } catch (error: any) {
       return { error: { message: error.message } };
@@ -62,13 +67,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       const data = await apiClient.post('/auth/signin', { email, password });
+      console.log('SignIn response:', data);
+      
       if (data.token) {
         localStorage.setItem('token', data.token);
         console.log('Token stored after signin:', data.token);
       }
+      
       if (data.user) {
+        console.log('Setting user data:', data.user);
         setUser(data.user);
       }
+      
       return { error: null };
     } catch (error: any) {
       return { error: { message: error.message } };

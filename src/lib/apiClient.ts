@@ -28,21 +28,36 @@ const apiClient = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
+    console.log('Making request to:', `${API_URL}${endpoint}`);
+    console.log('Request options:', { method: options.method || 'GET', headers });
+
     try {
       const response = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         headers,
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(error.error || 'Request failed');
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        let error;
+        try {
+          error = JSON.parse(errorText);
+        } catch {
+          error = { error: errorText || 'Request failed' };
+        }
+        throw new Error(error.error || error.message || 'Request failed');
       }
 
-      return response.json();
+      const data = await response.json();
+      console.log('Response data:', data);
+      return data;
     } catch (error: any) {
+      console.error('API request error:', error);
       if (error.message === 'Failed to fetch') {
-        throw new Error('Cannot connect to server. Make sure backend is running on port 5000');
+        throw new Error('Cannot connect to server. Make sure backend is running.');
       }
       throw error;
     }

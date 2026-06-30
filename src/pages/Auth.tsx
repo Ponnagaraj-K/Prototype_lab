@@ -30,15 +30,35 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (isLogin) {
-      const { error } = await signIn(email, password);
-      if (error) toast.error(error.message);
-    } else {
-      const { error } = await signUp(email, password, name);
-      if (error) toast.error(error.message);
-      else toast.success("Check your email to verify your account!");
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast.error(error.message);
+          setLoading(false);
+        } else {
+          // Wait a bit for state to update, then redirect
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 100);
+        }
+      } else {
+        const { error } = await signUp(email, password, name);
+        if (error) {
+          toast.error(error.message);
+          setLoading(false);
+        } else {
+          toast.success("Account created successfully!");
+          // Wait a bit for state to update, then redirect
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 100);
+        }
+      }
+    } catch (error) {
+      console.error('Auth error:', error);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

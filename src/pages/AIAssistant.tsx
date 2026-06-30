@@ -262,7 +262,7 @@ const AIAssistant = () => {
                   </div>
 
                   {/* Input */}
-                  <div className="border-t p-4">
+                  <div className="border-t p-4 bg-background">
                     <div className="flex gap-2">
                       <Input
                         value={input}
@@ -270,6 +270,7 @@ const AIAssistant = () => {
                         onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                         placeholder="Ask a question..."
                         disabled={loading}
+                        className="text-foreground bg-background border-input"
                       />
                       <Button onClick={handleSendMessage} disabled={loading || !input.trim()}>
                         <Send className="h-4 w-4" />

@@ -71,7 +71,22 @@ const Dashboard = () => {
   }
 
   if (!user.setupCompleted) {
-    return <SetupWizard onComplete={() => window.location.reload()} />;
+    return (
+      <SetupWizard 
+        onComplete={async () => {
+          // Fetch updated user data
+          try {
+            const userData = await apiClient.get('/auth/me');
+            console.log('Updated user data after setup:', userData);
+            // Force a full page reload to refresh all state
+            window.location.href = '/dashboard';
+          } catch (error) {
+            console.error('Error fetching updated user:', error);
+            window.location.reload();
+          }
+        }} 
+      />
+    );
   }
 
   return (
